@@ -16,7 +16,7 @@ type Scan struct {
 	status int
 }
 
-type Results struct {
+type Result struct {
 	mutex sync.Mutex
 	scans []Scan
 }
@@ -42,7 +42,7 @@ func parsePorts(portsRaw string) []string {
 	return ports
 }
 
-func scanPort(host string, port string, results *Results) {
+func scanPort(host string, port string, result *Result) {
 	var status int
 
 	conn, err := net.DialTimeout("tcp", host + ":" + port, 1*time.Second)
@@ -54,26 +54,26 @@ func scanPort(host string, port string, results *Results) {
 		conn.Close()
 	}
 
-	results.mutex.Lock()
-	defer results.mutex.Unlock()
+	result.mutex.Lock()
+	defer result.mutex.Unlock()
 	fmt.Println(port)
-	results.scans = append(results.scans, Scan{status: status, host: host, port:port})
+	result.scans = append(result.scans, Scan{status: status, host: host, port:port})
 }
 
-func scanAll(host string, ports []string) Results {
-	var results Results
+func scanAll(host string, ports []string) Result {
+	var result Result
 	var wg sync.WaitGroup
 
 	wg.Add(len(ports))
 	for _, port := range ports {
 		go func(p string) {
 			defer wg.Done()
-			scanPort(host, p, &results)
+			scanPort(host, p, &result)
 		}(port)
 	}
 	wg.Wait()
-	fmt.Println(results.scans)
-	return results
+
+	return result
 }
 
 func main() {
@@ -82,5 +82,7 @@ func main() {
 	ports := parsePorts(args[1])
 
 	// scan host with given ports
-	scanAll(host, ports)
+	result := scanAll(host, ports)
+
+	fmt.Println(result.scans)
 }
