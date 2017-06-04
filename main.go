@@ -21,15 +21,26 @@ type Result struct {
 	scans []Scan
 }
 
-func parsePorts(portsRaw string) []string {
+func parsePorts(portsRaw string) ([]string, error) {
 
 	var ports []string
 
 	if (strings.Contains(portsRaw, ":")) {
 		// range of ports
 		portSplit := strings.Split(portsRaw, ":")
-		firstPort, _ := strconv.Atoi(portSplit[0])
-		secondPort, _ := strconv.Atoi(portSplit[1])
+
+		// parse first port
+		firstPort, err := strconv.Atoi(portSplit[0])
+		if err != nil {
+			return nil, err
+		}
+
+		// parse second port
+		secondPort, err := strconv.Atoi(portSplit[1])
+		if err != nil {
+			return nil, err
+		}
+
 		for i := firstPort; i <= secondPort; i++ {
 			ports = append(ports, strconv.Itoa(i))
 		}
@@ -39,7 +50,7 @@ func parsePorts(portsRaw string) []string {
 		ports = append(ports, portsRaw)
 	}
 
-	return ports
+	return ports, nil
 }
 
 func scanPort(host string, port string, result *Result) {
@@ -56,7 +67,6 @@ func scanPort(host string, port string, result *Result) {
 
 	result.mutex.Lock()
 	defer result.mutex.Unlock()
-	fmt.Println(port)
 	result.scans = append(result.scans, Scan{status: status, host: host, port:port})
 }
 
@@ -77,12 +87,26 @@ func scanAll(host string, ports []string) Result {
 }
 
 func main() {
+	var host string
+
+	// parse command line arguments
 	args := os.Args[1:]
-	host := args[0]
-	ports := parsePorts(args[1])
 
-	// scan host with given ports
-	result := scanAll(host, ports)
+	if len(args) < 2 {
+		fmt.Println("Usage: goportscan HOST PORT")
+		os.Exit(0)
+	}
 
-	fmt.Println(result.scans)
+	host = args[0]
+	ports, err := parsePorts(args[1])
+
+	if err != nil {
+		fmt.Println("Failed to parse ports")
+		os.Exit(1)
+	} else {
+		// scan host with given ports
+		result := scanAll(host, ports)
+		fmt.Println(result.scans)
+	}
+
 }
