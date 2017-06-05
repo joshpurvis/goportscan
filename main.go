@@ -1,18 +1,18 @@
 package main
 
 import (
-	"os"
 	"fmt"
 	"net"
-	"time"
-	"sync"
-	"strings"
+	"os"
 	"strconv"
+	"strings"
+	"sync"
+	"time"
 )
 
 type Scan struct {
-	host string
-	port string
+	host   string
+	port   string
 	status int
 }
 
@@ -25,7 +25,7 @@ func parsePorts(portsRaw string) ([]string, error) {
 
 	var ports []string
 
-	if (strings.Contains(portsRaw, ":")) {
+	if strings.Contains(portsRaw, ":") {
 		// range of ports
 		portSplit := strings.Split(portsRaw, ":")
 
@@ -56,7 +56,7 @@ func parsePorts(portsRaw string) ([]string, error) {
 func scanPort(host string, port string, result *Result) {
 	var status int
 
-	conn, err := net.DialTimeout("tcp", host + ":" + port, 1*time.Second)
+	conn, err := net.DialTimeout("tcp", host+":"+port, 1*time.Second)
 
 	if err != nil {
 		status = 0
@@ -67,7 +67,7 @@ func scanPort(host string, port string, result *Result) {
 
 	result.mutex.Lock()
 	defer result.mutex.Unlock()
-	result.scans = append(result.scans, Scan{status: status, host: host, port:port})
+	result.scans = append(result.scans, Scan{status: status, host: host, port: port})
 }
 
 func scanAll(host string, ports []string) Result {
